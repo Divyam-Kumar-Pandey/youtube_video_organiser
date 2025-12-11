@@ -57,6 +57,15 @@ def delete_notebook(notebook_id):
 # Initialize DB on first run
 init_db()
 
+@st.dialog("Confirm Deletion", on_dismiss='rerun')
+def verify_deletion(selected_notebook_id):
+    st.write(f"Are you sure you want to delete this notebook?")
+    confirmation = st.text_input("Type 'DELETE' to confirm:")
+    if confirmation == "DELETE":
+        delete_notebook(selected_notebook_id)
+        st.rerun()
+    return None
+
 # --- 2. Streamlit UI Config ---
 st.set_page_config(layout="wide", page_title="Video Notebook Manager")
 
@@ -103,12 +112,11 @@ elif mode == "Open Notebook" and selected_notebook_id:
     conn.close()
 
     # Header with Delete Button
-    c1, c2 = st.columns([6, 1])
+    c1, c2 = st.columns([7.8, 1], vertical_alignment="bottom")
     c1.title(f"📖 {current_data['title']}")
-    if c2.button("🗑️ Delete", type="primary"):
-        delete_notebook(selected_notebook_id)
-        st.rerun()
-
+    if c2.button("🗑️ Delete Notebook", type="primary"):
+        verify_deletion(selected_notebook_id)
+            
     # Layout: Video (Left) vs Notes (Right)
     col_video, col_notes = st.columns([2, 1])
 
@@ -138,9 +146,9 @@ elif mode == "Open Notebook" and selected_notebook_id:
         st.subheader("Notes")
         # The trick: 'on_change' auto-saves when you click away or press Ctrl+Enter
         notes_input = st.text_area(
-            "Take notes here...",
+            "",
             value=current_data['notes'],
-            height=500,
+            height=480,
             key=f"notes_{selected_notebook_id}" # Unique key forces reset when switching notebooks
         )
         

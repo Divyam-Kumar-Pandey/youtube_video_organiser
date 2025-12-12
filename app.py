@@ -114,7 +114,7 @@ elif mode == "Open Notebook" and selected_notebook_id:
     # Header with Delete Button
     c1, c2 = st.columns([7.8, 1], vertical_alignment="bottom")
     c1.title(f"📖 {current_data['title']}")
-    if c2.button("🗑️ Delete Notebook", type="primary"):
+    if c2.button("Delete Notebook", type="primary"):
         verify_deletion(selected_notebook_id)
             
     # Layout: Video (Left) vs Notes (Right)
@@ -146,14 +146,14 @@ elif mode == "Open Notebook" and selected_notebook_id:
         st.subheader("Notes")
         # The trick: 'on_change' auto-saves when you click away or press Ctrl+Enter
         notes_input = st.text_area(
-            "",
+            "(Auto-saves on click away or Ctrl+Enter)",
             value=current_data['notes'],
             height=480,
             key=f"notes_{selected_notebook_id}" # Unique key forces reset when switching notebooks
         )
         
         # Save Button (Manual Trigger)
-        if st.button("💾 Save Notes"):
+        if st.button("Save Notes"):
             update_notes(selected_notebook_id, notes_input, playedSeconds)
             st.toast("Notes saved successfully!")
             

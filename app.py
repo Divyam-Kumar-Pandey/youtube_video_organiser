@@ -68,7 +68,7 @@ def verify_deletion(selected_notebook_id):
         st.rerun()
     return None
 
-def export_to_word(notebook_data):
+def export(notebook_data):
     # Create document in memory
     buffer = io.BytesIO()
 
@@ -152,7 +152,7 @@ elif mode == "Open Notebook" and selected_notebook_id:
     c1, c2, c3 = st.columns([6, 1, 1], vertical_alignment="bottom")
     c1.title(f"📖 {current_data['title']}")
     if c2.button("Export Word (.docx)", type="secondary"):
-        export_to_word(current_data)
+        export(current_data)
     if c3.button("Delete Notebook", type="primary"):
         verify_deletion(selected_notebook_id)
             

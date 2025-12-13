@@ -11,3 +11,6 @@ wheels/
 
 # database files
 notebooks.db
+
+# Streamlit specific files
+.streamlit/

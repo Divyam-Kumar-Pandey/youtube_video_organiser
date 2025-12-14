@@ -14,3 +14,4 @@ notebooks.db
 
 # Streamlit specific files
 .streamlit/
+new_features.txt

@@ -778,6 +778,18 @@ wheels = [
 ]
 
 [[package]]
+name = "st-quill-dark-mode"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a5/13/9ae653c8431be4e469f019fb06b85068ce66aa68e12620cb0c104fdb7c03/st_quill_dark_mode-0.0.3.tar.gz", hash = "sha256:6302ee699dee53e463368845b373e78f7a9fa214837653f757e8bba67fefa4b8", size = 1069110, upload-time = "2023-04-25T07:08:27.346Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/35/295171a4c664812c1eb8caab92f81fa9b823356d95c37d0395ff1c4a8357/st_quill_dark_mode-0.0.3-py3-none-any.whl", hash = "sha256:66fdaf80f230c3beb6026343b8debafd8d86637f2271c984278e3162252a7504", size = 1081882, upload-time = "2023-04-25T07:08:23.528Z" },
+]
+
+[[package]]
 name = "streamlit"
 version = "1.52.1"
 source = { registry = "https://pypi.org/simple" }
@@ -816,6 +828,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b2/4b/cd83390a98c36cde7a06cf1f427b7e32a41411b86205d3a521f84a6dcb1a/streamlit-player-0.1.5.tar.gz", hash = "sha256:7f27688fbdf6e385fd277cca00196e51a6e5cda7fc7c1a08098b0108508f5d0e", size = 582075, upload-time = "2020-12-17T18:59:05.304Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3c/6c/72bb49970e5db26fa65241ec98fb76856a4e2e0db8b32f8ebadab48e62ac/streamlit_player-0.1.5-py3-none-any.whl", hash = "sha256:69d635630293f0538983abbfb561feb31d3a11f1442ccf1d92c42303adfa8ff6", size = 1700760, upload-time = "2020-12-17T18:59:01.44Z" },
+]
+
+[[package]]
+name = "streamlit-quill"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/7c/0f8b9a457203f8a8e763b4708bbc98a5a202deaf963c690f240f1d4b9774/streamlit_quill-0.0.3-1-py3-none-any.whl", hash = "sha256:6f6851176811be38ce8393951a68afece5effae2aaf26752779d34dc024b7d99", size = 2915636, upload-time = "2020-09-27T15:24:38.953Z" },
 ]
 
 [[package]]
@@ -889,16 +912,20 @@ source = { virtual = "." }
 dependencies = [
     { name = "pandas" },
     { name = "python-docx" },
+    { name = "st-quill-dark-mode" },
     { name = "streamlit" },
     { name = "streamlit-player" },
+    { name = "streamlit-quill" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "python-docx", specifier = ">=1.2.0" },
+    { name = "st-quill-dark-mode", specifier = ">=0.0.3" },
     { name = "streamlit", specifier = ">=1.52.1" },
     { name = "streamlit-player", specifier = ">=0.1.5" },
+    { name = "streamlit-quill", specifier = ">=0.0.3" },
 ]
 
 [[package]]

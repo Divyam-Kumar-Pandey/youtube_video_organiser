@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from streamlit_player import st_player, _SUPPORTED_EVENTS
+from st_quill_dark_mode import st_quill_dark_mode
 from datetime import datetime
 from docx import Document
 import io, base64
@@ -183,15 +184,22 @@ elif mode == "Open Notebook" and selected_notebook_id:
             playedSeconds = (data or {}).get("playedSeconds", 0)
 
     with col_notes:
+
         st.subheader("Notes")
-        # The trick: 'on_change' auto-saves when you click away or press Ctrl+Enter
-        notes_input = st.text_area(
-            "(Auto-saves on click away or Ctrl+Enter)",
-            value=current_data['notes'],
-            height=480,
-            key=f"notes_{selected_notebook_id}" # Unique key forces reset when switching notebooks
-        )
-        
+        # Constrain notes area height using a scrollable container
+        with st.container(height=520, border=False):
+            # Quill rich-text editor for notes
+            notes_input = st_quill_dark_mode(
+                value=current_data["notes"] or "",
+                html=True,
+                placeholder="Write your notes here...",
+                key=f"notes_{selected_notebook_id}",  # Unique key forces reset when switching notebooks
+            )
+
+            # Fallback in case the component returns None before first interaction
+            if notes_input is None:
+                notes_input = current_data["notes"] or ""
+            
         # Save Button (Manual Trigger)
         if st.button("Save Notes"):
             update_notes(selected_notebook_id, notes_input, playedSeconds)

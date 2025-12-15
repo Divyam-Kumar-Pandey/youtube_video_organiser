@@ -153,7 +153,8 @@ elif mode == "Open Notebook" and selected_notebook_id:
     c1, c2, c3 = st.columns([6, 1, 1], vertical_alignment="bottom")
     c1.title(f"📖 {current_data['title']}")
     if c2.button("Export Word (.docx)", type="secondary"):
-        export(current_data)
+        st.warning("Export feature is currently disabled.")
+        # export(current_data)
     if c3.button("Delete Notebook", type="primary"):
         verify_deletion(selected_notebook_id)
             

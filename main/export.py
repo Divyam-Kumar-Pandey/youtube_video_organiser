@@ -5,6 +5,7 @@ from textwrap import dedent
 
 from docx import Document
 from htmldocx import HtmlToDocx
+from markdownify import markdownify as html_to_md
 import streamlit as st
 from weasyprint import HTML
 
@@ -21,6 +22,7 @@ def _load_svg(filename: str) -> str:
 
 DOCX_SVG = _load_svg("docx_icon.svg")
 PDF_SVG = _load_svg("PDF_file_icon.svg")
+MD_SVG = _load_svg("markdown_icon.svg")
 
 
 def _build_html(notebook_data) -> str:
@@ -55,7 +57,7 @@ def _build_html(notebook_data) -> str:
     return dedent(html)
 
 
-@st.dialog("Export notebook")
+@st.dialog("Export notebook", width="medium")
 def _export_dialog(notebook_data) -> None:
     """Dialog UI to choose export format (DOCX or PDF) with large icon cards."""
 
@@ -86,6 +88,14 @@ def _export_dialog(notebook_data) -> None:
     pdf_b64 = base64.b64encode(pdf_bytes).decode()
     pdf_name = f"{notebook_data['title'].replace(' ', '_')}.pdf"
 
+    # Build Markdown content
+    title = notebook_data["title"]
+    video_url = notebook_data["video_url"] or ""
+    notes_md = html_to_md(notes_html or "")
+    markdown_content = f"# {title}\n\nVideo URL: {video_url}\n\n## Notes\n\n{notes_md}\n"
+    md_b64 = base64.b64encode(markdown_content.encode("utf-8")).decode()
+    md_name = f"{notebook_data['title'].replace(' ', '_')}.md"
+
     # Render custom HTML with big square cards and inline SVG icons
     cards_html = f"""
     <style>
@@ -94,6 +104,7 @@ def _export_dialog(notebook_data) -> None:
         justify-content: center;
         gap: 2rem;
         margin-top: 1.5rem;
+        flex-wrap: wrap;
       }}
       .export-card {{
         width: 180px;
@@ -146,6 +157,14 @@ def _export_dialog(notebook_data) -> None:
       >
         {PDF_SVG}
         <span>Export as PDF</span>
+      </a>
+      <a
+        class="export-card md"
+        href="data:text/markdown;base64,{md_b64}"
+        download="{md_name}"
+      >
+        {MD_SVG}
+        <span>Export as Markdown</span>
       </a>
     </div>
     """

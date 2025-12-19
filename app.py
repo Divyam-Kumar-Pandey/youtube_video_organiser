@@ -71,9 +71,9 @@ elif mode == "Open Notebook" and selected_notebook_id:
     current_data = get_notebook_by_id(selected_notebook_id)
 
     # Header with Delete Button
-    c1, c2, c3 = st.columns([6, 1, 1], vertical_alignment="bottom")
+    c1, c2, c3 = st.columns([8, 1, 1], vertical_alignment="bottom")
     c1.title(f"📖 {current_data['title']}")
-    if c2.button("Export Word (.docx)", type="secondary"):
+    if c2.button("Export notes", type="secondary"):
         export(current_data)
     if c3.button("Delete Notebook", type="primary"):
         verify_deletion(selected_notebook_id)

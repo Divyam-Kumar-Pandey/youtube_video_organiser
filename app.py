@@ -9,6 +9,7 @@ from streamlit_player import st_player, _SUPPORTED_EVENTS
 from st_quill_dark_mode import st_quill_dark_mode
 
 from main.db import (
+    DB_FILE,
     init_db,
     get_all_notebooks,
     create_notebook,
@@ -41,7 +42,7 @@ with st.sidebar:
     # Mode Selection
     mode = st.radio(
         "Menu",
-        ["Open Notebook", "Create New", "Import from DB"],
+        ["Open Notebook", "Create New", "Import / Export data"],
         label_visibility="collapsed",
     )
     
@@ -50,8 +51,8 @@ with st.sidebar:
     selected_notebook_id = None
     
   
-    # Only load and show notebooks list when not in import mode
-    if mode != "Import from DB":
+    # Only load and show notebooks list when not in import/export mode
+    if mode != "Import / Export data":
         df = get_all_notebooks()
         if not df.empty:
             # Create a dictionary for the selectbox: {Title: ID}
@@ -77,62 +78,95 @@ if mode == "Create New":
             st.success(f"Created '{new_title}'!")
             st.rerun()
 
-elif mode == "Import from DB":
-    st.header("📥 Import Notebooks from SQLite DB")
-    st.write(
-        "Upload a SQLite database file created by this app. "
-        "Its `notebooks` table will be **appended** to your current library; "
-        "your existing data will not be replaced."
-    )
+elif mode == "Import / Export data":
+    st.header("📥 Import / Export data")
 
-    uploaded_file = st.file_uploader(
-        "SQLite database file",
-        type=["db", "sqlite", "sqlite3"],
-        help="Select a .db / .sqlite file that was exported or copied from another instance of this app.",
-    )
+    import_tab, export_tab = st.tabs(["Import from DB", "Export data"])
 
-    if uploaded_file is not None:
-        st.caption(
-            f"Selected file: `{uploaded_file.name}` "
-            f"({uploaded_file.size / 1024:.1f} KB)"
+    # --- Import Tab ---
+    with import_tab:
+        st.subheader("Import notebooks from SQLite DB")
+        st.write(
+            "Upload a SQLite database file created by this app. "
+            "Its `notebooks` table will be **appended** to your current library; "
+            "your existing data will not be replaced."
         )
 
-        if st.button("Start Import", type="primary"):
-            # Persist the uploaded file to a temporary path for sqlite3 to read
-            tmp_path = None
-            try:
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".db"
-                ) as tmp_file:
-                    tmp_file.write(uploaded_file.getbuffer())
-                    tmp_path = tmp_file.name
+        uploaded_file = st.file_uploader(
+            "SQLite database file",
+            type=["db", "sqlite", "sqlite3"],
+            help="Select a .db / .sqlite file that was exported or copied from another instance of this app.",
+        )
 
+        if uploaded_file is not None:
+            st.caption(
+                f"Selected file: `{uploaded_file.name}` "
+                f"({uploaded_file.size / 1024:.1f} KB)"
+            )
+
+            if st.button("Start Import", type="primary"):
+                # Persist the uploaded file to a temporary path for sqlite3 to read
+                tmp_path = None
                 try:
-                    result = import_notebooks_from_db(tmp_path)
-                except ValueError as exc:
-                    st.error(str(exc))
-                except Exception:
-                    st.error(
-                        "An unexpected error occurred while importing the database."
-                    )
-                else:
-                    imported = int(result.get("imported", 0))
-                    if imported > 0:
-                        st.success(f"Successfully imported {imported} notebooks.")
-                        # Refresh sidebar list so new notebooks are immediately visible
-                        st.rerun()
-                    else:
-                        st.info(
-                            "The database was valid but did not contain any notebooks "
-                            "to import."
-                        )
-            finally:
-                if tmp_path and os.path.exists(tmp_path):
+                    with tempfile.NamedTemporaryFile(
+                        delete=False, suffix=".db"
+                    ) as tmp_file:
+                        tmp_file.write(uploaded_file.getbuffer())
+                        tmp_path = tmp_file.name
+
                     try:
-                        os.remove(tmp_path)
-                    except OSError:
-                        # Not fatal – just log silently
-                        pass
+                        result = import_notebooks_from_db(tmp_path)
+                    except ValueError as exc:
+                        st.error(str(exc))
+                    except Exception:
+                        st.error(
+                            "An unexpected error occurred while importing the database."
+                        )
+                    else:
+                        imported = int(result.get("imported", 0))
+                        if imported > 0:
+                            st.success(f"Successfully imported {imported} notebooks.")
+                            # Refresh sidebar list so new notebooks are immediately visible
+                            st.rerun()
+                        else:
+                            st.info(
+                                "The database was valid but did not contain any notebooks "
+                                "to import."
+                            )
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        try:
+                            os.remove(tmp_path)
+                        except OSError:
+                            # Not fatal – just log silently
+                            pass
+
+    # --- Export Tab ---
+    with export_tab:
+        st.subheader("Export current data")
+        st.write(
+            "Download a copy of your current SQLite database file. "
+            "You can later import this file into another instance of the app."
+        )
+
+        if not os.path.exists(DB_FILE):
+            st.warning(
+                "The database file could not be found. "
+                "Try creating a notebook first and then refresh the page."
+            )
+        else:
+            try:
+                with open(DB_FILE, "rb") as f:
+                    db_bytes = f.read()
+            except OSError:
+                st.error("Could not read the database file for export.")
+            else:
+                st.download_button(
+                    "Download database file",
+                    data=db_bytes,
+                    file_name=DB_FILE,
+                    mime="application/octet-stream",
+                )
 
 elif mode == "Open Notebook" and selected_notebook_id:
     # Fetch current notebook data

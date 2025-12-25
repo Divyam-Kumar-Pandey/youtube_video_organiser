@@ -126,8 +126,7 @@ elif mode == "Import / Export data":
                         imported = int(result.get("imported", 0))
                         if imported > 0:
                             st.success(f"Successfully imported {imported} notebooks.")
-                            # Refresh sidebar list so new notebooks are immediately visible
-                            st.rerun()
+                            st.toast("Import completed successfully.")
                         else:
                             st.info(
                                 "The database was valid but did not contain any notebooks "

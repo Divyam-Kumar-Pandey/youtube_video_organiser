@@ -29,5 +29,5 @@ services:
       - PORT=8501
     command: /entrypoint.sh
 
-volumes:
-  notebook_db:
+# volumes:
+#   notebook_db:

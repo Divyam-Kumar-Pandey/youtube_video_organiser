@@ -1,0 +1,30 @@
+services:
+  youtube_lms:
+    build: .
+    image: youtube_lms:latest
+    container_name: youtube_lms
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - .git/
+            - .venv/
+            - notebooks.db
+            - .streamlit/
+            - .mypy_cache/
+            - .pytest_cache/
+            - .DS_Store
+            - .gitignore
+            - .dockerignore
+            - .dockerfile
+            - .docker-compose.yml
+    ports:
+      - 3000:8501
+    volumes:
+      - .:/app
+      - ./notebooks.db:/app/notebooks.db
+    environment:
+      - PORT=8501
+    command: /entrypoint.sh

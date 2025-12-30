@@ -33,7 +33,7 @@ def verify_deletion(selected_notebook_id):
     return None
 
 # --- 2. Streamlit UI Config ---
-st.set_page_config(layout="wide", page_title="Video Notebook Manager")
+st.set_page_config(layout="wide", page_icon=":notebook:", page_title="Video Notebook Manager")
 
 # --- 3. Sidebar: Notebook Management ---
 with st.sidebar:

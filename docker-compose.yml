@@ -21,10 +21,13 @@ services:
             - .dockerfile
             - .docker-compose.yml
     ports:
-      - 3000:8501
+      - 80:8501
     volumes:
       - .:/app
-      - ./notebooks.db:/app/notebooks.db
+      # - notebook_db:/app/notebooks.db
     environment:
       - PORT=8501
     command: /entrypoint.sh
+
+volumes:
+  notebook_db:

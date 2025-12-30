@@ -24,10 +24,6 @@ services:
       - 80:8501
     volumes:
       - .:/app
-      # - notebook_db:/app/notebooks.db
     environment:
       - PORT=8501
     command: /entrypoint.sh
-
-# volumes:
-#   notebook_db:

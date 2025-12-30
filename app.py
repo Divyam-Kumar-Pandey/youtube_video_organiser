@@ -13,6 +13,7 @@ from main.db import (
     init_db,
     get_all_notebooks,
     create_notebook,
+    update_title,
     update_notes,
     delete_notebook,
     get_notebook_by_id,
@@ -31,6 +32,27 @@ def verify_deletion(selected_notebook_id):
         delete_notebook(selected_notebook_id)
         st.rerun()
     return None
+
+
+@st.dialog("Rename Notebook", on_dismiss="rerun")
+def rename_notebook_dialog(selected_notebook_id: int, current_title: str) -> None:
+    """Modal dialog to edit a notebook title."""
+    new_title = st.text_input(
+        "Notebook title",
+        value=current_title,
+        key=f"rename_title_{selected_notebook_id}",
+    )
+
+    col_save, col_cancel = st.columns(2, gap="large")
+    with col_save:
+        if st.button("Save", type="primary", key=f"save_rename_{selected_notebook_id}"):
+            if new_title and new_title.strip() and new_title != current_title:
+                update_title(selected_notebook_id, new_title.strip())
+                st.rerun()
+                st.toast("Title updated.")
+    with col_cancel:
+        if st.button("Cancel", key=f"cancel_rename_{selected_notebook_id}"):
+            st.rerun()
 
 # --- 2. Streamlit UI Config ---
 st.set_page_config(layout="wide", page_icon=":notebook:", page_title="Video Notebook Manager")
@@ -171,12 +193,31 @@ elif mode == "Open Notebook" and selected_notebook_id:
     # Fetch current notebook data
     current_data = get_notebook_by_id(selected_notebook_id)
 
-    # Header with Delete Button
-    c1, c2, c3 = st.columns([8, 1, 1], vertical_alignment="bottom")
-    c1.title(f"📖 {current_data['title']}")
-    if c2.button("Export notes", type="secondary"):
+    # Header with large title, inline edit trigger, export and delete buttons
+    header_left, header_export, header_delete = st.columns(
+        [8, 1, 1], vertical_alignment="bottom"
+    )
+
+    with header_left:
+        title_col, icon_col = st.columns([12, 1], vertical_alignment="bottom")
+
+        with title_col: 
+            # Use native title styling for the notebook name
+            st.title(f"📖 {current_data['title']}", anchor=False, width="content")
+
+        # Small pencil icon that opens the rename dialog
+        pencil_clicked = icon_col.button(
+            "✏️",
+            key=f"pencil_btn_{selected_notebook_id}",
+            help="Rename this notebook",
+        )
+
+        if pencil_clicked:
+            rename_notebook_dialog(selected_notebook_id, current_data["title"])
+
+    if header_export.button("Export notes", type="secondary"):
         export(current_data)
-    if c3.button("Delete Notebook", type="primary"):
+    if header_delete.button("Delete Notebook", type="primary"):
         verify_deletion(selected_notebook_id)
             
     # Layout: Video (Left) vs Notes (Right)

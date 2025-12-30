@@ -49,6 +49,18 @@ def create_notebook(title: str, url: str) -> int:
     return int(notebook_id)
 
 
+def update_title(notebook_id: int, new_title: str) -> None:
+    """Update the title of a notebook."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute(
+        "UPDATE notebooks SET title = ? WHERE id = ?",
+        (new_title, notebook_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def update_notes(notebook_id: int, new_notes: str, progress_time_seconds: int = 0) -> None:
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()

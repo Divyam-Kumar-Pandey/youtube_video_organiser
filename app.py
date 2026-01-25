@@ -133,7 +133,7 @@ with st.sidebar:
 # --- 4. Main Area Logic ---
 
 if mode == "Create New":
-    st.header("✨ Create New Notebook")
+    st.header("Create New Notebook")
 
     if "new_title_auto" not in st.session_state:
         st.session_state["new_title_auto"] = ""

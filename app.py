@@ -1,7 +1,10 @@
 import io
 import base64
+import json
 import os
 import tempfile
+from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import urlopen
 from datetime import datetime
 
 import streamlit as st
@@ -21,13 +24,54 @@ from main.db import (
 )
 from main.export import export
 
+# --- YouTube helpers ---
+def extract_youtube_video_id(url: str) -> str | None:
+    if not url:
+        return None
+
+    parsed = urlparse(url.strip())
+    host = (parsed.netloc or "").lower()
+    path = (parsed.path or "").strip("/")
+
+    if host in {"youtu.be", "www.youtu.be"}:
+        return path.split("/")[0] if path else None
+
+    if host.endswith("youtube.com"):
+        if parsed.path == "/watch":
+            query = parse_qs(parsed.query)
+            return (query.get("v") or [None])[0]
+        if path.startswith("embed/"):
+            return path.split("/")[1] if len(path.split("/")) > 1 else None
+
+    return None
+
+
+def normalize_youtube_url(url: str) -> str | None:
+    video_id = extract_youtube_video_id(url)
+    if not video_id:
+        return None
+    return f"https://www.youtube.com/watch?v={video_id}"
+
+
+def fetch_youtube_title(url: str) -> str | None:
+    if not url:
+        return None
+
+    oembed_url = f"https://www.youtube.com/oembed?url={quote(url)}&format=json"
+    try:
+        with urlopen(oembed_url, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        return data.get("title")
+    except Exception:
+        return None
+
 # Initialize DB on first run
 init_db()
 
 @st.dialog("Confirm Deletion", on_dismiss='rerun')
 def verify_deletion(selected_notebook_id):
     st.write(f"Are you sure you want to delete this notebook?")
-    confirmation = st.text_input("Type 'DELETE' to confirm:")
+    confirmation = st.text_input("Type 'DELETE' to confirm:", autocomplete="off")
     if confirmation == "DELETE":
         delete_notebook(selected_notebook_id)
         st.rerun()
@@ -43,15 +87,15 @@ def rename_notebook_dialog(selected_notebook_id: int, current_title: str) -> Non
         key=f"rename_title_{selected_notebook_id}",
     )
 
-    col_save, col_cancel = st.columns(2, gap="large")
+    col_save, col_cancel = st.columns(2, gap="large", vertical_alignment="center", width="stretch")
     with col_save:
-        if st.button("Save", type="primary", key=f"save_rename_{selected_notebook_id}"):
+        if st.button("Save", type="primary", key=f"save_rename_{selected_notebook_id}", use_container_width=True):
             if new_title and new_title.strip() and new_title != current_title:
                 update_title(selected_notebook_id, new_title.strip())
                 st.rerun()
                 st.toast("Title updated.")
     with col_cancel:
-        if st.button("Cancel", key=f"cancel_rename_{selected_notebook_id}"):
+        if st.button("Cancel", key=f"cancel_rename_{selected_notebook_id}", use_container_width=True):
             st.rerun()
 
 # --- 2. Streamlit UI Config ---
@@ -90,15 +134,52 @@ with st.sidebar:
 
 if mode == "Create New":
     st.header("✨ Create New Notebook")
-    with st.form("new_notebook"):
-        new_title = st.text_input("Notebook Title", placeholder="e.g., Python Course - Lecture 1")
-        new_url = st.text_input("YouTube URL", placeholder="https://youtube.com/...")
+
+    if "new_title_auto" not in st.session_state:
+        st.session_state["new_title_auto"] = ""
+
+    def update_title_from_url() -> None:
+        raw_url = st.session_state.get("new_video_url", "").strip()
+        normalized_url = normalize_youtube_url(raw_url)
+        if not normalized_url:
+            return
+
+        title = fetch_youtube_title(normalized_url)
+        if not title:
+            return
+
+        current_title = st.session_state.get("new_title", "")
+        last_auto = st.session_state.get("new_title_auto", "")
+        if not current_title or current_title == last_auto:
+            st.session_state["new_title"] = title
+            st.session_state["new_title_auto"] = title
+
+    new_url = st.text_input(
+        "YouTube URL",
+        placeholder="https://youtube.com/...",
+        key="new_video_url",
+        on_change=update_title_from_url,
+    )
+
+    with st.form("new_notebook", clear_on_submit=True):
+        new_title = st.text_input(
+            "Notebook Title",
+            placeholder="e.g., Python Course - Lecture 1",
+            key="new_title",
+        )
         submitted = st.form_submit_button("Create Notebook")
-        
-        if submitted and new_title and new_url:
-            create_notebook(new_title, new_url)
-            st.success(f"Created '{new_title}'!")
-            st.rerun()
+
+        if submitted:
+            normalized_url = normalize_youtube_url(new_url)
+            if not normalized_url:
+                st.error("Please enter a valid YouTube URL.")
+            elif not new_title or not new_title.strip():
+                st.error("Please enter a notebook title.")
+            else:
+                create_notebook(new_title.strip(), normalized_url)
+                st.success(f"Created '{new_title.strip()}'!")
+                st.session_state["new_title_auto"] = ""
+                st.rerun()
 
 elif mode == "Import / Export data":
     st.header("📥 Import / Export data")
@@ -225,6 +306,7 @@ elif mode == "Open Notebook" and selected_notebook_id:
 
     with col_video:
         progressTimeSeconds = int(current_data['progress_time_seconds'])
+        video_url = normalize_youtube_url(current_data["video_url"]) or current_data["video_url"]
 
         options = {
             "events": ["onProgress"],
@@ -240,7 +322,7 @@ elif mode == "Open Notebook" and selected_notebook_id:
             }
         }
         
-        event = st_player(current_data['video_url'], **options, key="youtube_player",)
+        event = st_player(video_url, **options, key="youtube_player",)
         playedSeconds = 0
         if event :
             (name, data) = event

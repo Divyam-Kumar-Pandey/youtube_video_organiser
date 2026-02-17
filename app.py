@@ -345,12 +345,24 @@ elif mode == "Open Notebook" and selected_notebook_id:
             if notes_input is None:
                 notes_input = current_data["notes"] or ""
             
+
         # Save Button (Manual Trigger)
         if st.button("Save Notes"):
             update_notes(selected_notebook_id, notes_input, playedSeconds)
             st.toast("Notes saved successfully!")
-            
-        # Auto-save logic: Check if session state differs from DB
+
+        # --- Autosave every 1 minute ---
+        import time
+        autosave_key = f"autosave_last_{selected_notebook_id}"
+        now = time.time()
+        last_autosave = st.session_state.get(autosave_key, 0)
+        autosave_interval = 60  # seconds
+        if now - last_autosave > autosave_interval:
+            update_notes(selected_notebook_id, notes_input, playedSeconds)
+            st.session_state[autosave_key] = now
+            st.toast("Notes autosaved.", icon="💾")
+
+        # Auto-save logic: Check if session state differs from DB (existing logic)
         if notes_input != current_data['notes']:
             update_notes(selected_notebook_id, notes_input, playedSeconds)
 
